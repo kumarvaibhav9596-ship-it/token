@@ -1,0 +1,2 @@
+# Text-only mode uses Python's standard library. Install this for Gnani voice.
+gnani-vachana>=0.9,<1

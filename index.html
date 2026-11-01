@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#102a43">
+  <title>ZentroMart Support</title>
+  <style>
+    :root { color-scheme:light; --ink:#142f3b; --muted:#607680; --line:#dbe6e7; --blue:#086b70; --pale:#eef7f5; --green:#16806b; --saffron:#e7a43b; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; background:linear-gradient(135deg,#f3f7f4,#edf4f6); color:var(--ink); font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif; }
+    .shell { min-height:100vh; display:grid; grid-template-columns:minmax(250px,300px) minmax(0,800px); justify-content:center; gap:20px; padding:24px; }
+    aside,.panel { background:#fff; border:1px solid var(--line); border-radius:20px; box-shadow:0 12px 36px #173b3b0d; }
+    aside { padding:25px; height:max-content; position:sticky; top:24px; }
+    .brand { font-size:12px; letter-spacing:.16em; color:var(--blue); font-weight:850; }
+    h1 { margin:12px 0 8px; font-size:27px; line-height:1.18; letter-spacing:-.03em; }
+    .sub { margin:0; color:var(--muted); }
+    .rule { height:1px; background:var(--line); margin:21px 0; }
+    .section-label { margin:0 0 10px; font-size:12px; color:var(--muted); font-weight:700; letter-spacing:.07em; text-transform:uppercase; }
+    .suggestions { display:grid; gap:9px; }
+    .suggestions button { border:1px solid var(--line); border-radius:12px; background:#fff; color:var(--ink); text-align:left; padding:12px 13px; font:inherit; cursor:pointer; transition:background .15s,border-color .15s; }
+    .suggestions button:hover,.suggestions button:focus-visible { border-color:#71aaa7; background:var(--pale); }
+    .note { margin:18px 0 0; font-size:12px; color:var(--muted); }
+    .panel { min-height:calc(100vh - 48px); display:flex; flex-direction:column; overflow:hidden; }
+    .top { padding:18px 22px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; background:#ffffffd9; }
+    .top strong { font-size:15px; }
+    .online { color:var(--green); font-size:12px; }
+    .online:before { content:""; display:inline-block; width:7px; height:7px; margin-right:7px; background:currentColor; border-radius:50%; vertical-align:1px; }
+    #messages { flex:1; overflow:auto; padding:28px clamp(16px,4vw,42px); display:flex; flex-direction:column; gap:20px; }
+    .message { max-width:min(92%,600px); }
+    .message.user { align-self:flex-end; }
+    .message.assistant { align-self:flex-start; }
+    .label { margin:0 0 5px 4px; color:var(--muted); font-size:11px; font-weight:700; }
+    .bubble { white-space:pre-wrap; padding:14px 17px; border-radius:17px; background:var(--pale); }
+    .empty-state { margin:auto; color:var(--muted); text-align:center; padding:30px 22px; max-width:470px; }
+    .welcome-mark { display:grid; place-items:center; width:54px; height:54px; margin:0 auto 16px; border-radius:17px; color:#fff; background:linear-gradient(145deg,#08777a,#0b5a67); font-size:23px; font-weight:800; }
+    .empty-state h2 { margin:0 0 8px; color:var(--ink); font-size:24px; letter-spacing:-.025em; }
+    .empty-state p { margin:0; }
+    .user .bubble { background:#086b70; color:white; border-bottom-right-radius:5px; }
+    .assistant .bubble { border-bottom-left-radius:5px; }
+    .sources,.tools { margin:8px 0 0 3px; display:flex; flex-wrap:wrap; gap:6px; }
+    .chip { border:1px solid var(--line); border-radius:999px; background:#fff; padding:3px 9px; font-size:11px; color:#506778; }
+    .chip.decision { color:#12604e; border-color:#b7dfd4; background:#f0faf6; text-transform:capitalize; }
+    .composer { border-top:1px solid var(--line); padding:16px clamp(12px,3vw,24px); display:flex; flex-direction:column; gap:10px; align-items:stretch; background:#fff; }
+    .channel-row,.entry-row { display:flex; gap:10px; align-items:flex-end; }
+    .email-fields { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .email-fields[hidden] { display:none; }
+    .email-fields label { color:var(--muted); font-size:12px; font-weight:650; }
+    .email-fields input { display:block; width:100%; margin-top:4px; border:1px solid #cbd8e0; border-radius:10px; padding:9px 11px; color:var(--ink); font:inherit; }
+    .email-action { margin:9px 0 0 3px; display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+    .email-action button { border:1px solid #b7dfd4; border-radius:9px; background:#f0faf6; color:#12604e; padding:7px 11px; font:inherit; font-size:12px; font-weight:700; cursor:pointer; }
+    .email-action button:disabled { opacity:.65; cursor:default; }
+    .email-status { color:var(--muted); font-size:12px; }
+    .voice-row { display:flex; gap:10px; align-items:center; padding:0 clamp(12px,3vw,24px) 10px; }
+    .voice-button { border:1px solid #b7dfd4; border-radius:10px; background:#f0faf6; color:#12604e; padding:9px 12px; font:inherit; font-weight:700; cursor:pointer; }
+    .voice-button:disabled { opacity:.55; cursor:not-allowed; }
+    .voice-status { color:var(--muted); font-size:12px; }
+    .voice-player { display:block; max-width:100%; margin-top:8px; }
+    textarea { resize:vertical; min-height:48px; max-height:140px; flex:1; border:1px solid #cbd8e0; border-radius:13px; padding:12px 13px; color:var(--ink); font:inherit; outline:none; }
+    textarea:focus { border-color:var(--blue); box-shadow:0 0 0 3px #146c9418; }
+    .send,.reset { border:0; cursor:pointer; font:inherit; border-radius:11px; padding:11px 16px; }
+    .send { background:#086b70; color:#fff; font-weight:700; }
+    .send:disabled { opacity:.55; cursor:wait; }
+    .reset { padding:8px 11px; background:#f1f5f7; color:#526778; font-size:12px; }
+    .hint { padding:0 18px 14px; text-align:center; color:var(--muted); font-size:11px; }
+    .channel { border:1px solid var(--line); border-radius:10px; padding:10px 8px; background:#fff; color:var(--ink); font:inherit; }
+    .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+    .loading .bubble { color:var(--muted); }
+    .loading .bubble:after { content:' …'; animation:pulse 1s infinite alternate; }
+    .error .bubble { background:#fff4f0; color:#8c3526; border:1px solid #f2d4ca; }
+    @keyframes pulse { to { opacity:.35; } }
+    button:focus-visible,textarea:focus-visible,select:focus-visible { outline:3px solid #e7a43b88; outline-offset:2px; }
+    @media(max-width:760px) { .shell { grid-template-columns:1fr; padding:10px; gap:10px; } aside { padding:17px; position:static; } h1 { font-size:23px; } .suggestions { grid-template-columns:repeat(2,minmax(0,1fr)); } .panel { min-height:calc(100dvh - 230px); } #messages { min-height:42vh; padding:18px 13px; } .message { max-width:94%; } .top { padding:14px; } .composer { gap:7px; } .channel { max-width:78px; } .send { padding:11px 12px; } }
+    @media(max-width:480px) { .email-fields { grid-template-columns:1fr; gap:7px; } .entry-row { gap:7px; } .entry-row textarea { min-width:0; } }
+    @media(max-width:420px) { .suggestions { grid-template-columns:1fr; } .online { display:none; } .reset { margin-left:auto; } .top { gap:8px; } .channel { width:72px; padding:10px 4px; font-size:12px; } }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <aside>
+      <div class="brand">ZENTROMART</div>
+      <h1>How can we help today?</h1>
+      <p class="sub">Quick, clear help for your ZentroMart orders—grounded in the policies supplied for this demo.</p>
+      <div class="rule"></div>
+      <p class="section-label">Try a question</p>
+      <div class="suggestions">
+        <button data-prompt="How long does a refund to UPI take?">💳 &nbsp;Track a UPI refund</button>
+        <button data-prompt="Can I send electronics back if I changed my mind?">📦 &nbsp;Understand a return</button>
+        <button data-prompt="How do I claim a ZentroMart Assured warranty?">🛡️ &nbsp;Warranty help</button>
+        <button data-prompt="I want to speak to a human agent.">☎️ &nbsp;Talk to a colleague</button>
+      </div>
+      <p class="note">For order-specific help, share the 8-digit order ID. You’ll then be asked for either the registered phone suffix or delivery pincode. This demo uses synthetic data; don’t enter real personal information.</p>
+    </aside>
+    <section class="panel" aria-label="Support chat">
+      <header class="top"><strong>Customer care</strong><div><span class="online">Offline demo · synthetic data</span> <button class="reset" id="reset">New chat</button></div></header>
+      <div id="messages" aria-live="polite"><div class="empty-state" id="empty-state"><div class="welcome-mark" aria-hidden="true">Z</div><h2>Namaste! How can we help?</h2><p>Ask about an order, delivery, return or refund. Policy references appear below relevant answers.</p></div></div>
+      <form class="composer" id="form">
+        <div class="channel-row"><label class="sr-only" for="channel">Message type</label><select id="channel" class="channel" aria-label="Message type"><option value="chat">Chat</option><option value="email">Email</option><option value="ticket">Ticket</option></select></div>
+        <div class="email-fields" id="email-fields" hidden>
+          <label for="email-to">Demo recipient (use synthetic data)<input id="email-to" type="email" maxlength="254" autocomplete="off" placeholder="customer@example.com"></label>
+          <label for="email-subject">Original email subject<input id="email-subject" type="text" maxlength="180" placeholder="What is your question about?"></label>
+        </div>
+        <div class="entry-row"><textarea id="input" rows="1" maxlength="2000" placeholder="Type your message…" aria-label="Your message"></textarea><button class="send" id="send" type="submit">Send</button></div>
+      </form>
+      <div class="voice-row"><button class="voice-button" id="voice-button" type="button" disabled>Record voice message</button><span class="voice-status" id="voice-status">Voice is off until Gnani is configured.</span></div>
+      <div class="hint">Offline policy support using synthetic data. Email replies go to a local mock outbox; voice uses Gnani only when configured.</div>
+    </section>
+  </main>
+  <script>
+    const messages = document.querySelector('#messages');
+    const input = document.querySelector('#input');
+    const sendButton = document.querySelector('#send');
+    const form = document.querySelector('#form');
+    const channelSelect = document.querySelector('#channel');
+    const emailFields = document.querySelector('#email-fields');
+    const emailTo = document.querySelector('#email-to');
+    const emailSubject = document.querySelector('#email-subject');
+    const voiceButton = document.querySelector('#voice-button');
+    const voiceStatus = document.querySelector('#voice-status');
+    let currentRecorder = null;
+    fetch('/api/health').then(response => response.json()).then(status => {
+      const aiMode = status.llm_enabled ? `${status.llm_model} configured · offline fallback available` : 'Offline policy fallback';
+      document.querySelector('.online').textContent = status.voice_enabled
+        ? `${aiMode} · Gnani voice · synthetic data`
+        : `${aiMode} · synthetic data`;
+      voiceButton.disabled = !status.voice_enabled;
+      voiceStatus.textContent = status.voice_enabled ? 'Gnani voice is ready.' : 'Voice is off until Gnani is configured.';
+    }).catch(() => { document.querySelector('.online').textContent = 'Local demo · synthetic data'; });
+    const sessionKey = 'zentromart-session';
+    let sessionId = sessionStorage.getItem(sessionKey) || (crypto.randomUUID ? crypto.randomUUID() : `s-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+    sessionStorage.setItem(sessionKey, sessionId);
+    function updateChannelFields() { emailFields.hidden = channelSelect.value !== 'email'; }
+    channelSelect.addEventListener('change', updateChannelFields);
+
+    function encodeWav(samples, sampleRate) {
+      const buffer = new ArrayBuffer(44 + samples.length * 2);
+      const view = new DataView(buffer);
+      const write = (offset, value) => { for (let i = 0; i < value.length; i++) view.setUint8(offset + i, value.charCodeAt(i)); };
+      write(0, 'RIFF'); view.setUint32(4, 36 + samples.length * 2, true); write(8, 'WAVE');
+      write(12, 'fmt '); view.setUint32(16, 16, true); view.setUint16(20, 1, true);
+      view.setUint16(22, 1, true); view.setUint32(24, sampleRate, true);
+      view.setUint32(28, sampleRate * 2, true); view.setUint16(32, 2, true);
+      view.setUint16(34, 16, true); write(36, 'data'); view.setUint32(40, samples.length * 2, true);
+      for (let i = 0; i < samples.length; i++) {
+        const sample = Math.max(-1, Math.min(1, samples[i]));
+        view.setInt16(44 + i * 2, sample < 0 ? sample * 32768 : sample * 32767, true);
+      }
+      return new Uint8Array(buffer);
+    }
+
+    async function mediaBlobToWav(blob) {
+      const sourceContext = new AudioContext();
+      try {
+        const decoded = await sourceContext.decodeAudioData(await blob.arrayBuffer());
+        const length = Math.ceil(decoded.duration * 16000);
+        const offline = new OfflineAudioContext(1, length, 16000);
+        const source = offline.createBufferSource();
+        source.buffer = decoded;
+        source.connect(offline.destination);
+        source.start();
+        const rendered = await offline.startRendering();
+        return encodeWav(rendered.getChannelData(0), 16000);
+      } finally { await sourceContext.close(); }
+    }
+
+    voiceButton.addEventListener('click', async () => {
+      if (currentRecorder?.state === 'recording') {
+        currentRecorder.stop();
+        voiceButton.disabled = true;
+        voiceButton.textContent = 'Record voice message';
+        return;
+      }
+      if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
+        voiceStatus.textContent = 'This browser does not support microphone recording.';
+        return;
+      }
+      voiceButton.disabled = true;
+      let stream;
+      try {
+        voiceStatus.textContent = 'Allow microphone access, then speak for up to 30 seconds.';
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const recorder = new MediaRecorder(stream);
+        currentRecorder = recorder;
+        const chunks = [];
+        recorder.ondataavailable = event => { if (event.data.size) chunks.push(event.data); };
+        recorder.onstop = async () => {
+          currentRecorder = null;
+          voiceButton.textContent = 'Record voice message';
+          stream.getTracks().forEach(track => track.stop());
+          try {
+            voiceStatus.textContent = 'Transcribing and preparing a spoken reply…';
+            const wav = await mediaBlobToWav(new Blob(chunks, { type: recorder.mimeType }));
+            let binary = '';
+            for (let start = 0; start < wav.length; start += 0x8000) {
+              binary += String.fromCharCode(...wav.subarray(start, Math.min(start + 0x8000, wav.length)));
+            }
+            const response = await fetch('/api/voice', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ session_id: sessionId, audio_wav_base64: btoa(binary) })
+            });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(result.error || 'Voice request failed.');
+            addMessage('user', result.transcript);
+            const card = addMessage('assistant', result.answer, result);
+            if (result.audio_reply_base64) {
+              const player = document.createElement('audio');
+              player.className = 'voice-player'; player.controls = true;
+              player.src = `data:audio/wav;base64,${result.audio_reply_base64}`;
+              card.append(player);
+            }
+            voiceStatus.textContent = result.speech_error || 'Voice reply ready.';
+          } catch (error) { voiceStatus.textContent = error.message; }
+          finally { voiceButton.disabled = false; }
+        };
+        recorder.start();
+        voiceButton.textContent = 'Stop recording';
+        voiceButton.disabled = false;
+        const timer = setTimeout(() => { if (recorder.state === 'recording') recorder.stop(); }, 30000);
+        recorder.addEventListener('stop', () => clearTimeout(timer), { once: true });
+      } catch (error) {
+        stream?.getTracks().forEach(track => track.stop());
+        voiceStatus.textContent = 'Microphone access was unavailable. Check the browser permission and try again.';
+        voiceButton.disabled = false;
+      }
+    });
+
+    function addMessage(role, text, metadata = {}) {
+      const card = document.createElement('div');
+      card.className = `message ${role}${metadata.error ? ' error' : ''}`;
+      const label = document.createElement('div');
+      label.className = 'label';
+      label.textContent = role === 'user' ? 'You' : (metadata.error ? 'Connection issue' :
+        metadata.engine === 'openai_rag' ? `AI policy response · ${metadata.model || 'OpenAI'}` :
+        metadata.engine === 'rag' ? 'Offline policy answer' : 'ZentroMart customer care');
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      bubble.textContent = text;
+      card.append(label, bubble);
+      if (metadata.decision || (metadata.sources || []).length) {
+        const row = document.createElement('div');
+        row.className = 'sources';
+        if (metadata.decision && !metadata.error) {
+          const chip = document.createElement('span');
+          chip.className = 'chip decision';
+          chip.textContent = ({clarify:'One detail needed',escalate:'Human handover',refuse:'Could not confirm'})[metadata.decision] || 'Policy answer';
+          row.append(chip);
+        }
+        for (const source of metadata.sources || []) {
+          const chip = document.createElement('span');
+          chip.className = 'chip';
+          chip.textContent = `${source.id} · ${source.title}${source.effective_from ? ` · effective ${source.effective_from}` : ''}`;
+          row.append(chip);
+        }
+        card.append(row);
+      }
+      messages.append(card);
+      messages.scrollTop = messages.scrollHeight;
+      return card;
+    }
+
+    function attachEmailAction(card, data) {
+      const row = document.createElement('div');
+      row.className = 'email-action';
+      const button = document.createElement('button');
+      const status = document.createElement('span');
+      status.className = 'email-status';
+      button.textContent = 'Queue local email reply';
+        button.addEventListener('click', async () => {
+          button.disabled = true;
+          button.textContent = 'Queueing…';
+          status.textContent = '';
+          try {
+            const response = await fetch('/api/email/send', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ session_id: sessionId, draft_id: data.email_draft_id })
+            });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(result.error || 'Could not queue the email reply.');
+            button.textContent = 'Saved to mock outbox';
+            status.textContent = result.status === 'already_queued' ? 'This reply was already queued.' : 'Saved locally. No external email was sent.';
+          } catch (error) {
+            button.disabled = false;
+            button.textContent = 'Try sending again';
+            status.textContent = error.message;
+          }
+        });
+      row.append(button, status);
+      card.append(row);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    async function sendMessage(text) {
+      const message = text.trim();
+      if (!message) return;
+      if (channelSelect.value === 'email' && !emailTo.value.trim()) {
+        emailTo.setCustomValidity('Enter the customer email address for the reply.');
+        emailTo.reportValidity();
+        return;
+      }
+      emailTo.setCustomValidity('');
+      document.querySelector('#empty-state')?.remove();
+      addMessage('user', message);
+      input.value = '';
+      const loading = document.createElement('div');
+      loading.className = 'message assistant loading';
+      loading.setAttribute('role', 'status');
+      loading.innerHTML = '<div class="label">ZentroMart customer care</div><div class="bubble">Checking your message</div>';
+      messages.append(loading);
+      sendButton.disabled = true;
+      sendButton.textContent = 'Sending…';
+      messages.setAttribute('aria-busy', 'true');
+      try {
+        const response = await fetch('/api/chat', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ session_id: sessionId, message, channel: channelSelect.value,
+            ...(channelSelect.value === 'email' ? { email_to: emailTo.value.trim(), email_subject: emailSubject.value.trim() } : {}) })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || 'The request failed.');
+        const card = addMessage('assistant', data.answer, data);
+        if (data.email_status === 'draft_ready') attachEmailAction(card, data);
+        else if (data.email_message) {
+          const note = document.createElement('div');
+          note.className = 'email-status';
+          note.textContent = data.email_message;
+          card.append(note);
+        }
+      } catch (error) {
+        input.value = message;
+        addMessage('assistant', "I couldn't send that just now. Your message is back in the box; check the local demo and try again.", {error:true});
+      } finally {
+        loading.remove();
+        sendButton.disabled = false;
+        sendButton.textContent = 'Send';
+        messages.removeAttribute('aria-busy');
+        input.focus();
+      }
+    }
+
+    form.addEventListener('submit', event => { event.preventDefault(); sendMessage(input.value); });
+    input.addEventListener('keydown', event => {
+      if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); form.requestSubmit(); }
+    });
+    document.querySelectorAll('[data-prompt]').forEach(button => button.addEventListener('click', () => sendMessage(button.dataset.prompt)));
+    document.querySelector('#reset').addEventListener('click', async () => {
+      try { await fetch('/api/reset', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ session_id: sessionId }) }); } catch (_) {}
+      sessionId = crypto.randomUUID ? crypto.randomUUID() : `s-${Date.now()}`;
+      sessionStorage.setItem(sessionKey, sessionId);
+      messages.replaceChildren();
+      const empty = document.createElement('div');
+      empty.className = 'empty-state';
+      empty.id = 'empty-state';
+      const mark = document.createElement('div'); mark.className = 'welcome-mark'; mark.setAttribute('aria-hidden', 'true'); mark.textContent = 'Z';
+      const title = document.createElement('h2'); title.textContent = 'Namaste! How can we help?';
+      const copy = document.createElement('p'); copy.textContent = 'Ask about an order, delivery, return or refund. Policy references appear below relevant answers.';
+      empty.append(mark, title, copy);
+      messages.append(empty);
+      input.focus();
+    });
+  </script>
+</body>
+</html>
